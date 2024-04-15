@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Attendance System</h1>
+        <div class="camera">
+            <video id="video" width="640" height="480" autoplay></video>
+            <button id="snap">Take Photo</button>
+        </div>
+        <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+        <div id="result" class="hidden"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const snapButton = document.getElementById('snap');
+            const resultDiv = $('#result');
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.error('Error accessing the camera: ', err);
+                });
+
+            snapButton.addEventListener('click', function() {
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const image = canvas.toDataURL('image/jpeg');
+
+                $.ajax({
+                    url: '/check_presence',
+                    type: 'POST',
+                    data: { image: image },
+                    success: function(response) {
+                        resultDiv.text('Status: ' + response.status);
+                        resultDiv.removeClass('hidden');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
